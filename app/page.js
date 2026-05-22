@@ -865,7 +865,7 @@ export default function TGRFumigaciones() {
             <ul className="footer-links">
               <li><a href="tel:+529932424463">993 242 4463</a></li>
               <li><a href="mailto:contacto.tgrfumigaciones@gmail.com">contacto.tgrfumigaciones@gmail.com</a></li>
-              <li><a href="https://www.tgrfumigaciones.com">www.tgrfumigaciones.com</a></li>
+              <li><a href="https://tgr-fumigaciones.vercel.app/">www.tgr-fumigaciones.vercel.app</a></li>
               <li><a href="#inicio">Villahermosa, Tabasco</a></li>
             </ul>
             <div style={{ marginTop: 28 }}>
