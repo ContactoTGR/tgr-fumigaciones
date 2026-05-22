@@ -806,7 +806,7 @@ export default function TGRFumigaciones() {
                 { icon: "📞", label: "Teléfono / WhatsApp", content: <a href="tel:+529932424463">993 242 4463</a> },
                 { icon: "✉️", label: "Correo principal", content: <a href="mailto:contacto.tgrfumigaciones@gmail.com">contacto.tgrfumigaciones@gmail.com</a> },
                 { icon: "✉️", label: "Correo alternativo", content: <a href="mailto:tgrfumigaciones@gmail.com">tgrfumigaciones@gmail.com</a> },
-                { icon: "🌐", label: "Sitio web", content: <a href="https://www.tgrfumigaciones.com">www.tgrfumigaciones.com</a> },
+                { icon: "🌐", label: "Sitio web", content: <a href="https://tgr-fumigaciones.vercel.app/">www.tgr-fumigaciones.vercel.app</a> },
                 { icon: "📍", label: "Cobertura", content: <p>Villahermosa y área metropolitana, Tabasco</p> },
               ].map((item, i) => (
                 <div className="contacto-item" key={i}>
