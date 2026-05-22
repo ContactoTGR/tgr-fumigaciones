@@ -876,7 +876,7 @@ export default function TGRFumigaciones() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© 2025 TGR Fumigaciones. Todos los derechos reservados.</span>
+          <span>© 2026 TGR Fumigaciones. Todos los derechos reservados.</span>
           <span>Seguridad · Salud · Confianza · Experiencia</span>
         </div>
       </footer>
