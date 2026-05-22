@@ -1,4 +1,18 @@
 export const metadata = {
+  title: "TGR Fumigaciones | Control de Plagas en Villahermosa",
+  description:
+    "Empresa profesional de fumigación y control de plagas en Villahermosa, Tabasco. Eliminación de cucarachas, termitas, roedores y mosquitos.",
+  keywords: [
+    "fumigaciones villahermosa",
+    "control de plagas tabasco",
+    "fumigacion cucarachas",
+    "fumigacion termitas",
+    "fumigacion mosquitos",
+    "fumigacion casas",
+    "fumigacion negocios",
+  ],
+};
+export const metadata = {
   title: "TGR Fumigaciones | Control Profesional de Plagas en Tabasco",
   
   description:
