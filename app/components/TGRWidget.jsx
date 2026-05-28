@@ -28,7 +28,7 @@ export default function TGRWidget() {
 #tgr-teaser::after{content:"";position:absolute;bottom:-6px;right:20px;width:10px;height:10px;background:#1a2e1a;border-right:1px solid #2e7828;border-bottom:1px solid #2e7828;transform:rotate(45deg)}
 @keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-#tgr-panel{position:absolute;bottom:120px;right:0;width:370px;height:height:min(590px, 80vh);background:#0f1f0f;border:1px solid #2a4a28;border-radius:16px;display:none;flex-direction:column;z-index:99999;box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(76,175,70,.1);transform-origin:bottom right;animation:panelOpen .35s cubic-bezier(.34,1.56,.64,1) forwards;overflow:hidden}
+#tgr-panel{position:absolute;bottom:120px;right:0;width:370px;height:min(590px, 80vh);background:#0f1f0f;border:1px solid #2a4a28;border-radius:16px;display:none;flex-direction:column;z-index:99999;box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(76,175,70,.1);transform-origin:bottom right;animation:panelOpen .35s cubic-bezier(.34,1.56,.64,1) forwards;overflow:hidden}
 @keyframes panelOpen{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 
 .panel-head{background:linear-gradient(135deg,#1a3a18,#223d20);padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #2a4a28;flex-shrink:0}
@@ -139,7 +139,8 @@ let lead = {
   contact: { name: "", phone: "", whatsapp: "", email: "" },
   score: 0,
   category: "",
-  timestamp: ""
+  timestamp: "",
+  folio: ""
 };
 
 // ═══ LEAD SCORING ═══
@@ -166,6 +167,17 @@ function calcScore() {
   lead.score = s;
   lead.category = s >= 120 ? "🔥 Premium" : s >= 81 ? "🌶️ Caliente" : s >= 41 ? "⚡ Medio" : "🌱 Básico";
   updateScoreUI(s);
+}
+
+// ═══ FOLIO GENERATOR ═══
+function generateFolio() {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(2);
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  const prefix = lead.clientType === "industrial" ? "IND" : lead.clientType === "commercial" ? "COM" : "RES";
+  return `TGR-${prefix}-${yy}${mm}${dd}-${rand}`;
 }
 
 function updateScoreUI(s) {
@@ -227,6 +239,7 @@ function buildWAMessage() {
     lead.location.city   ? `• Municipio: ${lead.location.city}` : "",
     lead.location.colony ? `• Colonia: ${lead.location.colony}` : "",
     "",
+    lead.folio ? `📋 *Folio:* ${lead.folio}` : "",
     `🏆 *Score:* ${lead.score} pts — ${lead.category}`,
     `🕐 ${new Date().toLocaleString("es-MX")}`,
     "━━━━━━━━━━━━━━━━━━━━━━",
@@ -306,7 +319,7 @@ function tgrToggle() {
     panel.style.display = "flex";
     panel.style.flexDirection = "column";
 
-  if (teaser) teaser.remove();  
+  if (teaser) teaser.style.display = "none";
   
     dot.style.display = "none";
     btnChat.style.display = "none";
@@ -429,14 +442,20 @@ async function sendMsg(userText) {
         messages: chatHistory
       })
     });
-const data = await res.json();
+    console.log("STATUS:", res.status);
+    const data = await res.json();
+    console.log("API RESPONSE FULL:", JSON.stringify(data));
 
-console.log("API RESPONSE:", data);
-
-const raw =
-  data?.content?.[0]?.text ||
-  data?.text ||
-  "Disculpa, ¿puedes repetir eso?";
+    // Soporte para múltiples formatos de respuesta del backend
+    const raw =
+      data?.content?.[0]?.text ||   // Anthropic nativo
+      data?.message ||               // {message: "..."}
+      data?.response ||              // {response: "..."}
+      data?.text ||                  // {text: "..."}
+      data?.choices?.[0]?.message?.content || // OpenAI format
+      data?.reply ||
+      (typeof data === "string" ? data : null) ||
+      "Disculpa, ¿puedes repetir eso?";
     const { clean, leadReady: ready } = parseResponse(raw);
     hideTyping();
 
@@ -444,7 +463,8 @@ const raw =
     if (ready && !leadReady) {
       leadReady = true;
       lead.timestamp = new Date().toISOString();
-      notify = `Lead registrado — ${lead.contact.name || "cliente"} · ${lead.category}`;
+      lead.folio = generateFolio();
+      notify = `✅ Folio ${lead.folio} — ${lead.contact.name || "cliente"} · ${lead.category}`;
       updateWABtn();
       postSheets({ ...lead, chatHistory: chatHistory.map(m=>m.content).join(" | ") });
     } else if (lead.contact.name || lead.location.city) {
@@ -462,43 +482,42 @@ const raw =
   document.getElementById("tgr-input").focus();
 }
 
-}, []);
 
-useEffect(() => {
+  // ── EVENT LISTENERS ──
 
-  const teaser = document.getElementById("tgr-teaser");
-  const panel = document.getElementById("tgr-panel");
+  // Teaser click abre el panel correctamente (llama a tgrToggle)
+  setTimeout(() => {
+    const teaserEl = document.getElementById("tgr-teaser");
+    if (teaserEl) {
+      teaserEl.style.cursor = "pointer";
+      teaserEl.addEventListener("click", () => {
+        if (window.tgrToggle) window.tgrToggle();
+      });
+    }
+  }, 200);
 
-  if (teaser && panel) {
-    teaser.addEventListener("click", () => {
-      panel.style.display = "flex";
+  const inputEl = document.getElementById("tgr-input");
+  const sendEl  = document.getElementById("tgr-send");
+
+  if (inputEl && sendEl) {
+    inputEl.addEventListener("input", () => {
+      sendEl.disabled = !inputEl.value.trim();
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 80) + "px";
     });
-  }
 
-  const input = document.getElementById("tgr-input");
-  const send = document.getElementById("tgr-send");
-
-  if (input && send) {
-
-    input.addEventListener("input", () => {
-      send.disabled = !input.value.trim();
-      input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight, 80) + "px";
-    });
-
-    input.addEventListener("keydown", (e) => {
+    inputEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        const t = input.value.trim();
+        const t = inputEl.value.trim();
         if (t) sendMsg(t);
       }
     });
 
-    send.addEventListener("click", () => {
-      const t = input.value.trim();
+    sendEl.addEventListener("click", () => {
+      const t = inputEl.value.trim();
       if (t) sendMsg(t);
     });
-
   }
 
   setTimeout(() => {
@@ -506,7 +525,7 @@ useEffect(() => {
     if (dot) dot.style.display = "block";
   }, 4000);
 
-});
+}, []);
 
   return (
     <div id="tgr-widget">
