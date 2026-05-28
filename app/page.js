@@ -187,7 +187,7 @@ export default function TGRFumigaciones() {
         .hero-card {
           background: rgba(18,45,28,0.88);
           border: 1px solid rgba(92,184,92,0.2);
-          backdrop-filter: blur(10px); padding: 36px;
+          backdrop-filter: blur(10px); padding: 22px 28px;
         }
         .hero-card-title {
           font-family: 'Barlow Condensed', sans-serif;
@@ -195,11 +195,11 @@ export default function TGRFumigaciones() {
           letter-spacing: 0.2em; text-transform: uppercase;
           color: var(--verde-lima); margin-bottom: 24px;
         }
-        .hero-card-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
-        .hero-card-list li {
-          display: flex; align-items: flex-start; gap: 12px;
+       .hero-card-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+       .hero-card-list li {
+          display: flex; align-items: flex-start; gap: 10px;
           font-family: 'Barlow', sans-serif;
-          font-size: 14px; color: rgba(240,240,236,0.85); line-height: 1.4;
+          font-size: 13px; color: rgba(240,240,236,0.85); line-height: 1.35
         }
         .check {
           width: 20px; height: 20px; min-width: 20px;
@@ -208,7 +208,7 @@ export default function TGRFumigaciones() {
           font-size: 10px; color: var(--verde-lima); margin-top: 1px;
         }
         .cofepris-badge {
-          margin-top: 24px; padding-top: 20px;
+          margin-top: 14px; padding-top: 14px;
           border-top: 1px solid rgba(92,184,92,0.15);
           display: flex; align-items: center; gap: 12px;
         }
@@ -385,7 +385,7 @@ export default function TGRFumigaciones() {
           .nav-links { display: none; }
           .hamburger { display: flex; }
 
-          .hero-content { padding: 40px 20px; }
+          .hero-content { padding: 36px 16px; }
           .hero-sub { font-size: 15px; margin: 16px 0 28px; }
           .hero-actions { flex-direction: column; gap: 12px; }
           .hero-actions a { width: 100%; justify-content: center; text-align: center; }
