@@ -424,6 +424,52 @@ async function postSheets(data) {
   try { fetch(TGR_CONFIG.SHEETS_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data) }); } catch(e) {}
 }
 
+// Función base que hace el fetch (usada por sendMsg con retry)
+async function callAPI(retries = 3, delayMs = 8000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system: BASE_SYSTEM, messages: chatHistory })
+    });
+    const data = await res.json();
+
+    if (res.status === 429) {
+      // Quota exceeded — mostrar aviso y reintentar
+      const waitSec = attempt * (delayMs / 1000);
+      if (attempt < retries) {
+        // Actualizar el indicador de typing con aviso
+        const typingEl = document.getElementById("tgr-typing");
+        if (typingEl) {
+          typingEl.querySelector(".msg-bubble").innerHTML =
+            `<div style="padding:10px 14px;font-size:12px;color:#4caf46">⏳ Espera un momento... (intento ${attempt}/${retries})</div>`;
+        }
+        await new Promise(r => setTimeout(r, delayMs));
+        continue;
+      }
+      // Se agotaron los reintentos
+      return { error: "quota", raw: null };
+    }
+
+    if (!res.ok) {
+      return { error: "server", raw: null };
+    }
+
+    const raw =
+      data?.content?.[0]?.text ||
+      data?.message ||
+      data?.response ||
+      data?.text ||
+      data?.choices?.[0]?.message?.content ||
+      data?.reply ||
+      (typeof data === "string" ? data : null) ||
+      null;
+
+    return { error: null, raw };
+  }
+  return { error: "quota", raw: null };
+}
+
 async function sendMsg(userText) {
   if (!userText || isTyping) return;
   const input = document.getElementById("tgr-input");
@@ -434,30 +480,25 @@ async function sendMsg(userText) {
   showTyping();
 
   try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system: BASE_SYSTEM,
-        messages: chatHistory
-      })
-    });
-    console.log("STATUS:", res.status);
-    const data = await res.json();
-    console.log("API RESPONSE FULL:", JSON.stringify(data));
+    const { error, raw } = await callAPI(3, 8000);
 
-    // Soporte para múltiples formatos de respuesta del backend
-    const raw =
-      data?.content?.[0]?.text ||   // Anthropic nativo
-      data?.message ||               // {message: "..."}
-      data?.response ||              // {response: "..."}
-      data?.text ||                  // {text: "..."}
-      data?.choices?.[0]?.message?.content || // OpenAI format
-      data?.reply ||
-      (typeof data === "string" ? data : null) ||
-      "Disculpa, ¿puedes repetir eso?";
-    const { clean, leadReady: ready } = parseResponse(raw);
     hideTyping();
+
+    if (error === "quota") {
+      addMsg("bot", "⏳ Estoy muy ocupado en este momento. Por favor intenta en unos minutos o contáctanos directamente por WhatsApp.");
+      isTyping = false;
+      document.getElementById("tgr-input").focus();
+      return;
+    }
+
+    if (!raw) {
+      addMsg("bot", "Disculpa, ¿puedes repetir eso?");
+      isTyping = false;
+      document.getElementById("tgr-input").focus();
+      return;
+    }
+
+    const { clean, leadReady: ready } = parseResponse(raw);
 
     let notify = null;
     if (ready && !leadReady) {
