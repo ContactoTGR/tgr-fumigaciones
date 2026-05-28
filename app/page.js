@@ -187,7 +187,7 @@ export default function TGRFumigaciones() {
         .hero-card {
           background: rgba(18,45,28,0.88);
           border: 1px solid rgba(92,184,92,0.2);
-          backdrop-filter: blur(10px); padding: 22px 28px;
+          backdrop-filter: blur(10px); padding: 24px 20px;
         }
         .hero-card-title {
           font-family: 'Barlow Condensed', sans-serif;
