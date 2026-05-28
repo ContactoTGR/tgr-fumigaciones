@@ -1,3 +1,5 @@
+import TGRWidget from "@/app/components/TGRWidget";  // ← LÍNEA 1 AGREGADA
+
 export const metadata = {
   title: "TGR Fumigaciones | Control Profesional de Plagas en Tabasco",
 
@@ -40,7 +42,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        {children}
+        <TGRWidget />   {/* ← LÍNEA 2 AGREGADA */}
+      </body>
     </html>
   );
 }

@@ -1,3 +1,4 @@
+import TGRWidget from "@/app/components/TGRWidget";
 export default function TGRFumigaciones() {
 
   const servicios = [
@@ -589,7 +590,7 @@ export default function TGRFumigaciones() {
             <p className="hero-sub">
               Manejo y control de plagas para hogares, negocios y
               establecimientos regulados. Soluciones seguras, discretas
-              y con garantía por escrito.
+              y con servicio profesionalizado.
             </p>
             <div className="hero-actions">
               <a href="https://wa.me/529932424463" className="btn-primary">
@@ -608,7 +609,7 @@ export default function TGRFumigaciones() {
               {[
                 "Técnicos certificados y capacitados",
                 "Productos seguros de baja toxicidad",
-                "Garantía por escrito en cada servicio",
+                "Servicio profesionalizado en cada atención",
                 "Reportes digitales con evidencia fotográfica",
                 "Atención personalizada y discreta",
                 "Cumplimiento normativo COFEPRIS",
@@ -777,7 +778,7 @@ export default function TGRFumigaciones() {
                   { icon: "🎓", title: "Personal certificado", desc: "Técnicos con capacitación constante en manejo higiénico y control integrado de plagas." },
                   { icon: "🧪", title: "Productos seguros", desc: "Baja toxicidad, grado alimenticio cuando se requiere. Sin riesgo para tu familia ni mascotas." },
                   { icon: "📊", title: "Reportes digitales", desc: "Evidencia fotográfica, bitácoras y fichas técnicas entregadas después de cada servicio." },
-                  { icon: "✍️", title: "Garantía por escrito", desc: "Respaldo documentado en cada servicio. Si el problema regresa, nosotros regresamos." },
+                  { icon: "✍️", title: "Servicio profesionalizado", desc: "Respaldo documentado en cada atecnción. Si el problema regresa, nosotros regresamos." },
                 ].map((item, i) => (
                   <li key={i}>
                     <div className="nl-icon">{item.icon}</div>
@@ -831,7 +832,7 @@ export default function TGRFumigaciones() {
                 💬 Escribir por WhatsApp
               </a>
               <div style={{ marginTop: 24, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                {["🛡️ Garantía por escrito","⚡ Respuesta en 24h","✅ Empresa COFEPRIS"].map((t,i)=>(
+                {["🛡️ Servicio profesionalizado","⚡ Respuesta en 24h","✅ Empresa COFEPRIS"].map((t,i)=>(
                   <span key={i} style={{ fontFamily: "'Barlow', sans-serif", fontSize: 12, color: "rgba(240,240,236,0.6)" }}>{t}</span>
                 ))}
               </div>
@@ -880,6 +881,9 @@ export default function TGRFumigaciones() {
           <span>Seguridad · Salud · Confianza · Experiencia</span>
         </div>
       </footer>
-    </div>
-  );
+
+<TGRWidget />
+
+</div>
+);
 }
