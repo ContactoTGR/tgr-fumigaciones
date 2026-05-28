@@ -113,7 +113,7 @@ export default function TGRWidget() {
     // ═══ CONFIGURACIÓN ═══
 const TGR_CONFIG = {
   // API_KEY ya no va aquí — vive segura en Vercel
-  SHEETS_URL: "",
+  SHEETS_URL: "https://script.google.com/macros/s/AKfycbyOtMTeCG_VgKzWx28ektIr2E2GZWTpOcQiKu3v4meLV-pb4djuk5SBmsjsLrfeED24/exec",
   WA_NUMBER: "529931724667",
   EMPRESA: "TGR Fumigaciones",
   SOURCE: "widget-web",
