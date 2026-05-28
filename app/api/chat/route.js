@@ -33,7 +33,7 @@ export async function POST(request) {
     if (!messages || !Array.isArray(messages)) {
       return Response.json(
         { error: "messages required" },
-        { status: 400, headers: corsHeaders(origin) }
+        { status: 450, headers: corsHeaders(origin) }
       );
     }
  
