@@ -24,11 +24,12 @@ export default function TGRWidget() {
 .notif-dot{position:absolute;top:8px;right:8px;width:16px;height:16px;border-radius:50%;background:#ff4444;border:2px solid #0d1a0d;animation:blink 1.5s ease-in-out infinite;display:none}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-#tgr-teaser{position:absolute;bottom:112px;right:0;background:#1a2e1a;border:1px solid #2e7828;border-radius:12px 12px 4px 12px;padding:10px 14px;white-space:nowrap;font-size:13px;font-weight:500;color:#c8e8c0;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeSlide .4s ease forwards}
+#tgr-teaser{position:absolute;bottom:112px;right:0;background:#1a2e1a;border:1px solid #2e7828;border-radius:12px 12px 4px 12px;padding:10px 14px;white-space:nowrap;font-size:13px;font-weight:500;color:#c8e8c0;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeSlide .4s ease forwards;cursor:pointer}
+#tgr-widget.panel-open #tgr-teaser{display:none !important}
 #tgr-teaser::after{content:"";position:absolute;bottom:-6px;right:20px;width:10px;height:10px;background:#1a2e1a;border-right:1px solid #2e7828;border-bottom:1px solid #2e7828;transform:rotate(45deg)}
 @keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-#tgr-panel{position:absolute;bottom:120px;right:0;width:370px;height:min(590px, 80vh);background:#0f1f0f;border:1px solid #2a4a28;border-radius:16px;display:none;flex-direction:column;z-index:99999;box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(76,175,70,.1);transform-origin:bottom right;animation:panelOpen .35s cubic-bezier(.34,1.56,.64,1) forwards;overflow:hidden}
+#tgr-panel{position:absolute;bottom:120px;right:0;width:360px;height:min(500px, 65vh);background:#0f1f0f;border:1px solid #2a4a28;border-radius:16px;display:none;flex-direction:column;z-index:99999;box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(76,175,70,.1);transform-origin:bottom right;animation:panelOpen .35s cubic-bezier(.34,1.56,.64,1) forwards;overflow:hidden}
 @keyframes panelOpen{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 
 .panel-head{background:linear-gradient(135deg,#1a3a18,#223d20);padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #2a4a28;flex-shrink:0}
@@ -87,7 +88,7 @@ export default function TGRWidget() {
 .send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .send-btn svg{width:18px;height:18px;fill:#fff}
 
-@media(max-width:420px){#tgr-panel{width:calc(100vw - 20px);right:-14px;height:520px}}`;
+@media(max-width:420px){#tgr-panel{width:calc(100vw - 20px);right:-14px;height:min(480px,65vh)}}`;
       document.head.appendChild(style);
     }
 
@@ -318,8 +319,7 @@ function tgrToggle() {
   if (panelOpen) {
     panel.style.display = "flex";
     panel.style.flexDirection = "column";
-
-  if (teaser) teaser.style.display = "none";
+    document.getElementById("tgr-widget").classList.add("panel-open");
   
     dot.style.display = "none";
     btnChat.style.display = "none";
@@ -333,6 +333,7 @@ function tgrToggle() {
     panel.style.display = "none";
     btnChat.style.display = "block";
     btnClose.style.display = "none";
+    document.getElementById("tgr-widget").classList.remove("panel-open");
   }
 }
 
