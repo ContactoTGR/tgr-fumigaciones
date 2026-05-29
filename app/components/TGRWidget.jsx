@@ -6,7 +6,7 @@ const LOGO = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJ
 
 // ── Configuración central ─────────────────────────────────────────
 const CFG = {
-  PHONE:      "529936984612",
+  PHONE:      "529932424463",
   SHEETS_URL: "https://script.google.com/macros/s/AKfycbyOtMTeCG_VgKzWx28ektIr2E2GZWTpOcQiKu3v4meLV-pb4djuk5SBmsjsLrfeED24/exec",
   SOURCE:     "widget-web",
   WA_LABEL_RESIDENTIAL: "📲 Continuar por WhatsApp",
@@ -164,7 +164,7 @@ export default function TGRWidget() {
       const rnd = Math.floor(1000 + Math.random() * 9000);
       const { clientType } = leadRef.current;
       const pfx = clientType === "industrial" ? "IND" : clientType === "commercial" ? "COM" : "RES";
-      return `TGR-W-${pfx}-${yy}${mm}${dd}-${rnd}`;
+      return `TGR-${pfx}-${yy}${mm}${dd}-${rnd}`;
     }
 
     // ══ SCORING DE LEAD ════════════════════════════════════════════
@@ -477,12 +477,17 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
             const qrEl = document.getElementById("tgr-qr");
             if (qrEl) {
               qrEl.innerHTML = "";
+              const btnWA = document.createElement("button");
+              btnWA.className = "qr-btn";
+              btnWA.innerHTML = "💬 Ir directo a WhatsApp";
+              btnWA.onclick = () => { qrEl.innerHTML = ""; updateWABtn(); };
               const btnGuide = document.createElement("button");
               btnGuide.className = "qr-btn";
               btnGuide.style.borderColor = "#4db8ff";
               btnGuide.style.color = "#4db8ff";
               btnGuide.innerHTML = "📋 Continuar con asistente";
               btnGuide.onclick = () => { qrEl.innerHTML = ""; startGuidedFlow(); };
+              qrEl.appendChild(btnWA);
               qrEl.appendChild(btnGuide);
             }
           } else {
@@ -758,7 +763,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
       calcScore();
       updateWABtn();
       window.__tgrGF.step = "contact";
-      addMsg("bot", "Casi listo. ¿Me das tu nombre y teléfono?\n\nEscríbelos así: *Juan García / 9931234567*");
+      addMsg("bot", "Casi listo. ¿Me das tu nombre y teléfono?\n\nEscríbelos así: *Juan García / 9936984612*");
     }
 
     function handleGuidedContact(text) {
@@ -861,7 +866,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
       addMsg(
         "bot",
         "⚠️ *Esta precotización es un estimado sujeto a revisión.* Un técnico certificado de TGR te contactará para confirmar detalles y precio final.",
-        `✅ Folio ${L.folio}`
+        `✅ Folio ${L.folio} — ${L.category}`
       );
       updateWABtn();
       postSheets({
@@ -1019,7 +1024,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
 
         {/* Score bar */}
         <div className="score-bar" id="tgr-score-bar">
-          
+          <div className="score-label">CALIFICACIÓN DEL LEAD</div>
           <div className="score-track">
             <div className="score-fill" id="tgr-score-fill" style={{ width: "0%", background: "#4caf46" }}></div>
           </div>
