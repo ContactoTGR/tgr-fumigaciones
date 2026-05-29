@@ -453,6 +453,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
         addMsg("user", userText);
         if (gf.step === "city")    { handleGuidedCity(userText);    return; }
         if (gf.step === "contact") { handleGuidedContact(userText); return; }
+        if (gf.step === "email")   { handleGuidedEmail(userText);   return; }
       }
       if (!userText || isTypingRef.current) return;
       const input = document.getElementById("tgr-input");
@@ -495,7 +496,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
           isTypingRef.current = false;
           if (send) send.disabled = false;
           if (input) input.focus();
-          updateWABtn();
+          // NO mostramos el botón WA grande aquí — solo los dos botones pequeños
           return;
         }
 
@@ -544,11 +545,42 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
 
 
     // ══ GUIDED FLOW ════════════════════════════════════════════════
+    function showGuidedTypeButtons() {
+      const qr = document.getElementById("tgr-qr");
+      if (!qr) return;
+      qr.innerHTML = "";
+      [
+        ["🏠 Residencial", "residential"],
+        ["🏢 Comercial",   "commercial"],
+        ["🏭 Industrial",  "industrial"],
+      ].forEach(([label, type]) => {
+        const btn = document.createElement("button");
+        btn.className = `qr-btn type-${type}`;
+        btn.textContent = label;
+        btn.onclick = () => {
+          leadRef.current.clientType = type;
+          setTypeBadge(type);
+          qr.innerHTML = "";
+          addMsg("user", label);
+          addMsg("bot", "¿Qué servicio o plaga necesitas atender?");
+          showGuidedPestButtons();
+          const msgs = document.getElementById("tgr-messages");
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        };
+        qr.appendChild(btn);
+      });
+    }
+
     function startGuidedFlow() {
       window.__tgrGF.active = true;
       window.__tgrGF.step   = null;
-      addMsg("bot", "Te ayudo paso a paso. ¿Qué servicio necesitas?");
-      showGuidedPestButtons();
+      if (!leadRef.current.clientType) {
+        addMsg("bot", "¿Tu solicitud es para un hogar, negocio o instalación industrial?");
+        showGuidedTypeButtons();
+      } else {
+        addMsg("bot", "Perfecto. ¿Qué servicio o plaga necesitas atender?");
+        showGuidedPestButtons();
+      }
     }
 
     function showGuidedPestButtons() {
@@ -583,6 +615,8 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
         };
         qr.appendChild(btn);
       });
+      const _msgs1 = document.getElementById("tgr-messages");
+      if (_msgs1) _msgs1.scrollTop = _msgs1.scrollHeight;
     }
 
     function showGuidedLevelButtons() {
@@ -610,6 +644,8 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
         };
         qr.appendChild(btn);
       });
+      const _msgs2 = document.getElementById("tgr-messages");
+      if (_msgs2) _msgs2.scrollTop = _msgs2.scrollHeight;
     }
 
     function showGuidedSizeButtons() {
@@ -650,6 +686,8 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
         };
         qr.appendChild(btn);
       });
+      const _msgs3 = document.getElementById("tgr-messages");
+      if (_msgs3) _msgs3.scrollTop = _msgs3.scrollHeight;
     }
 
     function showGuidedBizOrCity() {
@@ -744,8 +782,20 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
         }
       }
       L.contact.whatsapp = L.contact.phone;
-      L.timestamp        = new Date().toISOString();
-      L.folio            = generateFolio();
+      calcScore();
+      // Pedir email opcional
+      window.__tgrGF.step = "email";
+      addMsg("bot", "¿Tienes correo electrónico? Te enviaremos la precotización por email.\n\nEscribe tu correo o *no* para continuar.");
+    }
+
+    function handleGuidedEmail(text) {
+      const L = leadRef.current;
+      const t = text.trim().toLowerCase();
+      if (t !== "no" && t !== "n" && t.includes("@")) {
+        L.contact.email = text.trim();
+      }
+      L.timestamp = new Date().toISOString();
+      L.folio     = generateFolio();
       calcScore();
       updateWABtn();
       window.__tgrGF.step = null;
