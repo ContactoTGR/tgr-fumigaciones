@@ -41,6 +41,9 @@ export default function TGRWidget() {
   // ── Un solo useEffect, se ejecuta UNA vez al montar ───────────
   useEffect(() => {
 
+    // ── Guided flow state via window — scope-proof ─────────────────
+    window.__tgrGF = { active: false, step: null, precotizacion: null };
+
     // ══ ESTILOS ═══════════════════════════════════════════════════
     if (!document.getElementById("tgr-styles")) {
       const s = document.createElement("style");
@@ -441,7 +444,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
     // ══ ENVIAR MENSAJE ════════════════════════════════════════════
     async function sendMsg(userText) {
       // ── Guided flow: route text steps ──────────────────────────
-      const gf = guidedFlowRef.current;
+      const gf = window.__tgrGF;
       if (gf.active && gf.step && userText) {
         const input = document.getElementById("tgr-input");
         const send  = document.getElementById("tgr-send");
@@ -542,8 +545,8 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
 
     // ══ GUIDED FLOW ════════════════════════════════════════════════
     function startGuidedFlow() {
-      guidedFlowRef.current.active = true;
-      guidedFlowRef.current.step   = null;
+      window.__tgrGF.active = true;
+      window.__tgrGF.step   = null;
       addMsg("bot", "Te ayudo paso a paso. ¿Qué servicio necesitas?");
       showGuidedPestButtons();
     }
@@ -712,7 +715,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
     }
 
     function askGuidedCity() {
-      guidedFlowRef.current.step = "city";
+      window.__tgrGF.step = "city";
       addMsg("bot", "¿En qué municipio o ciudad te encuentras?");
       document.getElementById("tgr-input")?.focus();
     }
@@ -721,7 +724,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
       leadRef.current.location.city = text;
       calcScore();
       updateWABtn();
-      guidedFlowRef.current.step = "contact";
+      window.__tgrGF.step = "contact";
       addMsg("bot", "Casi listo. ¿Me das tu nombre y teléfono?\n\nEscríbelos así: *Juan García / 9931234567*");
     }
 
@@ -745,7 +748,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
       L.folio            = generateFolio();
       calcScore();
       updateWABtn();
-      guidedFlowRef.current.step = null;
+      window.__tgrGF.step = null;
       doGuidedFinalCall();
     }
 
@@ -779,7 +782,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
         const quote = data?.content?.[0]?.text || data?.message || data?.response || data?.text || null;
         if (!res.ok || !quote) { showGuidedManualSummary(); }
         else {
-          guidedFlowRef.current.precotizacion = quote;
+          window.__tgrGF.precotizacion = quote;
           addMsg("bot", quote);
           finishGuidedFlow(quote);
         }
@@ -878,7 +881,7 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
       [
         ["🏠 Residencial", "residential", "Necesito servicio para mi hogar o vivienda"],
         ["🏢 Comercial",   "commercial",  "Necesito servicio para mi negocio o empresa"],
-        ["🏭 Industrial",  "industrial",  "Necesito servicio para una planta o instalación industrial"],
+        ["🏭 Industrial",  "industrial",  "Necesito servicio para planta o instalación industrial"],
       ].forEach(([label, type, msg]) => {
         const btn = document.createElement("button");
         btn.className = `qr-btn type-${type}`;
