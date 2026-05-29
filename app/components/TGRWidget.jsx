@@ -440,6 +440,17 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
 
     // ══ ENVIAR MENSAJE ════════════════════════════════════════════
     async function sendMsg(userText) {
+      // ── Guided flow: route text steps ──────────────────────────
+      const gf = guidedFlowRef.current;
+      if (gf.active && gf.step && userText) {
+        const input = document.getElementById("tgr-input");
+        const send  = document.getElementById("tgr-send");
+        if (input) input.value = "";
+        if (send)  send.disabled = true;
+        addMsg("user", userText);
+        if (gf.step === "city")    { handleGuidedCity(userText);    return; }
+        if (gf.step === "contact") { handleGuidedContact(userText); return; }
+      }
       if (!userText || isTypingRef.current) return;
       const input = document.getElementById("tgr-input");
       const send  = document.getElementById("tgr-send");
@@ -456,10 +467,28 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
         hideTyping();
 
         if (!ok) {
-          const msg = error === "quota"
-            ? "⏳ Estoy muy ocupado en este momento. Escríbenos directo por WhatsApp y te atendemos de inmediato."
-            : "Hubo un problema de conexión. Intenta de nuevo o contáctanos por WhatsApp.";
-          addMsg("bot", msg);
+          if (error === "quota") {
+            // ── Offer guided flow fallback ──────────────────────
+            addMsg("bot", "⏳ Estoy muy ocupado ahora. Pero puedo ayudarte de otra forma:");
+            const qrEl = document.getElementById("tgr-qr");
+            if (qrEl) {
+              qrEl.innerHTML = "";
+              const btnWA = document.createElement("button");
+              btnWA.className = "qr-btn";
+              btnWA.innerHTML = "💬 Ir directo a WhatsApp";
+              btnWA.onclick = () => { qrEl.innerHTML = ""; updateWABtn(); };
+              const btnGuide = document.createElement("button");
+              btnGuide.className = "qr-btn";
+              btnGuide.style.borderColor = "#4db8ff";
+              btnGuide.style.color = "#4db8ff";
+              btnGuide.innerHTML = "📋 Continuar con asistente";
+              btnGuide.onclick = () => { qrEl.innerHTML = ""; startGuidedFlow(); };
+              qrEl.appendChild(btnWA);
+              qrEl.appendChild(btnGuide);
+            }
+          } else {
+            addMsg("bot", "Hubo un problema de conexión. Intenta de nuevo o contáctanos por WhatsApp.");
+          }
           isTypingRef.current = false;
           if (send) send.disabled = false;
           if (input) input.focus();
@@ -509,6 +538,290 @@ Cuando tengas nombre + teléfono + tipo de problema → incluye también: [LEAD_
 
     // Exponer para que el JSX lo llame
     window.__tgrSend = sendMsg;
+
+
+    // ══ GUIDED FLOW ════════════════════════════════════════════════
+    function startGuidedFlow() {
+      guidedFlowRef.current.active = true;
+      guidedFlowRef.current.step   = null;
+      addMsg("bot", "Te ayudo paso a paso. ¿Qué servicio necesitas?");
+      showGuidedPestButtons();
+    }
+
+    function showGuidedPestButtons() {
+      const qr = document.getElementById("tgr-qr");
+      if (!qr) return;
+      qr.innerHTML = "";
+      const opts = [
+        ["🪳 Cucarachas",             "Cucarachas"],
+        ["🐀 Ratas/Roedores",         "Ratas y roedores"],
+        ["🦟 Mosquitos",              "Mosquitos"],
+        ["🐜 Termitas",               "Termitas"],
+        ["🐜 Hormigas",               "Hormigas"],
+        ["🦂 Alacranes",              "Alacranes"],
+        ["🐛 Chinches",               "Chinches"],
+        ["🧴 Sanitización",           "Sanitización"],
+        ["📋 Capacitación COFEPRIS",  "Capacitación COFEPRIS"],
+        ["❓ Otro",                   "Otro"],
+      ];
+      opts.forEach(([label, value]) => {
+        const btn = document.createElement("button");
+        btn.className = "qr-btn";
+        btn.textContent = label;
+        btn.onclick = () => {
+          leadRef.current.pestType = value;
+          qr.innerHTML = "";
+          addMsg("user", label);
+          calcScore();
+          // Route by service type
+          if (value === "Capacitación COFEPRIS") showGuidedBizOrCity();
+          else if (value === "Sanitización")     showGuidedSizeButtons();
+          else                                   showGuidedLevelButtons();
+        };
+        qr.appendChild(btn);
+      });
+    }
+
+    function showGuidedLevelButtons() {
+      addMsg("bot", "¿Cómo describirías el nivel de infestación?");
+      const qr = document.getElementById("tgr-qr");
+      if (!qr) return;
+      qr.innerHTML = "";
+      const opts = [
+        ["🛡️ Preventivo", "Preventivo"],
+        ["🟡 Bajo",        "Bajo"],
+        ["🟠 Medio",       "Medio"],
+        ["🔴 Alto",        "Alto"],
+        ["🚨 Urgente",     "Urgente"],
+      ];
+      opts.forEach(([label, value]) => {
+        const btn = document.createElement("button");
+        btn.className = "qr-btn";
+        btn.textContent = label;
+        btn.onclick = () => {
+          leadRef.current.infestationLevel = value;
+          qr.innerHTML = "";
+          addMsg("user", label);
+          calcScore();
+          showGuidedSizeButtons();
+        };
+        qr.appendChild(btn);
+      });
+    }
+
+    function showGuidedSizeButtons() {
+      addMsg("bot", "¿Cuál es el tamaño aproximado del espacio?");
+      const qr  = document.getElementById("tgr-qr");
+      if (!qr) return;
+      qr.innerHTML = "";
+      const ct  = leadRef.current.clientType;
+      const map = {
+        residential: [
+          ["🏠 Estudio/Depto  (<50m²)",   "<50m²"],
+          ["🏠 Casa chica     (50-80m²)",  "50-80m²"],
+          ["🏠 Casa mediana   (80-150m²)", "80-150m²"],
+          ["🏠 Casa grande    (+150m²)",   "150m²+"],
+        ],
+        commercial: [
+          ["🏪 Local chico    (<100m²)",    "<100m²"],
+          ["🏪 Local mediano  (100-300m²)", "100-300m²"],
+          ["🏪 Local grande   (300-500m²)", "300-500m²"],
+        ],
+        industrial: [
+          ["🏭 Planta chica   (500-1000m²)",  "500-1000m²"],
+          ["🏭 Planta mediana (1000-3000m²)", "1000-3000m²"],
+          ["🏭 Planta grande  (+3000m²)",     "3000m²+"],
+        ],
+      };
+      const opts = map[ct] || map.residential;
+      opts.forEach(([label, value]) => {
+        const btn = document.createElement("button");
+        btn.className = "qr-btn";
+        btn.textContent = label;
+        btn.onclick = () => {
+          leadRef.current.propertySize = value;
+          qr.innerHTML = "";
+          addMsg("user", label);
+          calcScore();
+          showGuidedBizOrCity();
+        };
+        qr.appendChild(btn);
+      });
+    }
+
+    function showGuidedBizOrCity() {
+      const ct = leadRef.current.clientType;
+      if (ct === "commercial" || ct === "industrial") showGuidedBizButtons();
+      else askGuidedCity();
+    }
+
+    function showGuidedBizButtons() {
+      addMsg("bot", "¿Cuál es el giro o tipo de instalación?");
+      const qr = document.getElementById("tgr-qr");
+      if (!qr) return;
+      qr.innerHTML = "";
+      const opts = [
+        ["🍽️ Restaurante",       "Restaurante"],
+        ["🏨 Hotel",             "Hotel"],
+        ["🏢 Oficinas",          "Oficinas"],
+        ["🏥 Clínica/Hospital",  "Clínica/Hospital"],
+        ["📦 Bodega/Almacén",    "Bodega/Almacén"],
+        ["🏭 Planta industrial", "Planta industrial"],
+        ["❓ Otro",              "Otro"],
+      ];
+      opts.forEach(([label, value]) => {
+        const btn = document.createElement("button");
+        btn.className = "qr-btn";
+        btn.textContent = label;
+        btn.onclick = () => {
+          leadRef.current.businessType = value;
+          qr.innerHTML = "";
+          addMsg("user", label);
+          calcScore();
+          if (leadRef.current.pestType === "Capacitación COFEPRIS") askGuidedCity();
+          else showGuidedFreqButtons();
+        };
+        qr.appendChild(btn);
+      });
+    }
+
+    function showGuidedFreqButtons() {
+      addMsg("bot", "¿Qué frecuencia de servicio necesitas?");
+      const qr = document.getElementById("tgr-qr");
+      if (!qr) return;
+      qr.innerHTML = "";
+      const opts = [
+        ["1️⃣ Servicio único",    "Servicio único"],
+        ["📅 Mensual",           "Mensual"],
+        ["📅 Bimestral",         "Bimestral"],
+        ["♻️ Programa continuo", "Programa continuo"],
+      ];
+      opts.forEach(([label, value]) => {
+        const btn = document.createElement("button");
+        btn.className = "qr-btn";
+        btn.textContent = label;
+        btn.onclick = () => {
+          leadRef.current.frequency = value;
+          qr.innerHTML = "";
+          addMsg("user", label);
+          calcScore();
+          askGuidedCity();
+        };
+        qr.appendChild(btn);
+      });
+    }
+
+    function askGuidedCity() {
+      guidedFlowRef.current.step = "city";
+      addMsg("bot", "¿En qué municipio o ciudad te encuentras?");
+      document.getElementById("tgr-input")?.focus();
+    }
+
+    function handleGuidedCity(text) {
+      leadRef.current.location.city = text;
+      calcScore();
+      updateWABtn();
+      guidedFlowRef.current.step = "contact";
+      addMsg("bot", "Casi listo. ¿Me das tu nombre y teléfono?\n\nEscríbelos así: *Juan García / 9931234567*");
+    }
+
+    function handleGuidedContact(text) {
+      const L = leadRef.current;
+      const parts = text.split(/[\/,|·\-]/);
+      if (parts.length >= 2) {
+        L.contact.name  = parts[0].trim();
+        L.contact.phone = parts[1].trim().replace(/\s/g, "");
+      } else {
+        const m = text.match(/\d{7,15}/);
+        if (m) {
+          L.contact.phone = m[0];
+          L.contact.name  = text.replace(m[0], "").replace(/[\/,|·\-]/, "").trim();
+        } else {
+          L.contact.name = text;
+        }
+      }
+      L.contact.whatsapp = L.contact.phone;
+      L.timestamp        = new Date().toISOString();
+      L.folio            = generateFolio();
+      calcScore();
+      updateWABtn();
+      guidedFlowRef.current.step = null;
+      doGuidedFinalCall();
+    }
+
+    async function doGuidedFinalCall() {
+      const L   = leadRef.current;
+      const ct  = L.clientType === "residential" ? "residencial"
+                : L.clientType === "commercial"  ? "comercial"
+                : "industrial";
+      const prompt = [
+        `Genera una precotización breve para TGR Fumigaciones:`,
+        `- Servicio: ${L.pestType}`,
+        `- Cliente: ${ct}`,
+        L.infestationLevel ? `- Nivel: ${L.infestationLevel}` : "",
+        L.propertySize     ? `- Área: ${L.propertySize}`      : "",
+        L.businessType     ? `- Giro: ${L.businessType}`      : "",
+        L.frequency        ? `- Frecuencia: ${L.frequency}`   : "",
+        `- Municipio: ${L.location.city}`,
+        `Incluye rango de precio estimado, técnica/producto y tiempo aprox. Máx 5 líneas. Al final menciona que un técnico confirmará el precio tras visita diagnóstico.`,
+      ].filter(Boolean).join("\n");
+
+      showTyping();
+      isTypingRef.current = true;
+      try {
+        const res  = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ system: SYSTEM, messages: [{ role: "user", content: prompt }] }),
+        });
+        const data = await res.json();
+        hideTyping();
+        const quote = data?.content?.[0]?.text || data?.message || data?.response || data?.text || null;
+        if (!res.ok || !quote) { showGuidedManualSummary(); }
+        else {
+          guidedFlowRef.current.precotizacion = quote;
+          addMsg("bot", quote);
+          finishGuidedFlow(quote);
+        }
+      } catch(e) {
+        hideTyping();
+        showGuidedManualSummary();
+      }
+      isTypingRef.current = false;
+    }
+
+    function showGuidedManualSummary() {
+      const L = leadRef.current;
+      const lines = [
+        "📋 *Resumen de tu solicitud:*",
+        `🗂️ Folio: ${L.folio}`,
+        `🪲 Servicio: ${L.pestType}`,
+        L.infestationLevel ? `📊 Nivel: ${L.infestationLevel}` : "",
+        L.propertySize     ? `📐 Área: ${L.propertySize}`      : "",
+        L.businessType     ? `🏢 Giro: ${L.businessType}`      : "",
+        L.frequency        ? `📅 Frecuencia: ${L.frequency}`   : "",
+        `📍 Municipio: ${L.location.city}`,
+        `👤 Nombre: ${L.contact.name}`,
+        `📞 Teléfono: ${L.contact.phone}`,
+      ].filter(Boolean).join("\n");
+      addMsg("bot", lines);
+      finishGuidedFlow(null);
+    }
+
+    function finishGuidedFlow(quote) {
+      const L = leadRef.current;
+      addMsg(
+        "bot",
+        "⚠️ *Esta precotización es un estimado sujeto a revisión.* Un técnico certificado de TGR te contactará para confirmar detalles y precio final.",
+        `✅ Folio ${L.folio} — ${L.category}`
+      );
+      updateWABtn();
+      postSheets({
+        ...L,
+        precotizacion: quote || "",
+        chatHistory: `Flujo guiado | ${L.pestType}${L.infestationLevel ? " | Nivel: "+L.infestationLevel : ""}${L.propertySize ? " | Área: "+L.propertySize : ""}${L.businessType ? " | Giro: "+L.businessType : ""}${L.frequency ? " | Frec: "+L.frequency : ""} | ${L.location.city}`,
+      });
+    }
 
     // ══ TOGGLE PANEL ══════════════════════════════════════════════
     function tgrToggle() {
